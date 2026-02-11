@@ -1,0 +1,151 @@
+# Indonesian translation for gnome shell extension docker.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Ilham Adi Setiawan <ilhamsetiawan@duck.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-16 17:56+0000\n"
+"PO-Revision-Date: 2023-09-29 09:48+0700\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: id_ID\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.3.2\n"
+
+#: src/lib/docker.js:24
+msgid "Start docker"
+msgstr "Mulai docker"
+
+#: src/lib/docker.js:28
+msgid "Check if running"
+msgstr ""
+
+#: src/lib/docker.js:33
+msgid "Start"
+msgstr "Mulai"
+
+#: src/lib/docker.js:37
+msgid "Start interactive"
+msgstr "Mulai secara interaktif"
+
+#: src/lib/docker.js:41
+msgid "Restart"
+msgstr "Mulai Ulang"
+
+#: src/lib/docker.js:45 src/lib/docker.js:82
+msgid "Stop"
+msgstr "Berhenti"
+
+#: src/lib/docker.js:49
+msgid "Pause"
+msgstr "Jeda"
+
+#: src/lib/docker.js:53
+msgid "Unpause"
+msgstr "Batalkan Jeda"
+
+#: src/lib/docker.js:57 src/lib/docker.js:86 src/lib/docker.js:92
+msgid "Remove"
+msgstr "Hapus"
+
+#: src/lib/docker.js:61
+msgid "Exec Bash"
+msgstr "Mengeksekusi Bash"
+
+#: src/lib/docker.js:65
+msgid "Attach Terminal"
+msgstr "Gunakan Terminal"
+
+#: src/lib/docker.js:69 src/lib/docker.js:104 src/modules/imageMenuIcons.js:28
+msgid "Inspect"
+msgstr "Memeriksa"
+
+#: src/lib/docker.js:73
+#, fuzzy
+msgid "View logs"
+msgstr "Melihat Log"
+
+#: src/lib/docker.js:78
+msgid "Up"
+msgstr "Naik"
+
+#: src/lib/docker.js:96 src/modules/imageMenuIcons.js:20
+msgid "Run"
+msgstr "Jalankan"
+
+#: src/lib/docker.js:100 src/modules/imageMenuIcons.js:24
+msgid "Run interactive"
+msgstr "Jalankan secara interaktif"
+
+#: src/modules/containerMenu.js:52 src/ui/dialogs/information.js:25
+msgid "Information"
+msgstr "Informasi"
+
+#: src/modules/containerMenu.js:55
+#, fuzzy
+msgid "copied to clipboard"
+msgstr "Menyalin IP Ke papan clip"
+
+#: src/modules/containerMenu.js:84
+msgid "Ports"
+msgstr "Port"
+
+#: src/modules/menu.js:24 src/ui/menu.js:26
+msgid "Docker Menu"
+msgstr "Menu Docker"
+
+#: src/prefs.js:28
+msgid "General"
+msgstr "Umum"
+
+#: src/prefs.js:35
+msgid "Logo"
+msgstr "Logo"
+
+#: src/prefs.js:44
+msgid "Menu"
+msgstr "Menu"
+
+#: src/prefs.js:54
+msgid "Menu Quick Settings"
+msgstr "Menu Pengaturan Cepat"
+
+#: src/prefs.js:67
+msgid "Menu Text/Image"
+msgstr "Teks/Gambar Menu"
+
+#: src/prefs.js:74
+msgid "Show/Hide"
+msgstr "Tampilkan/Sembunyikan"
+
+#: src/prefs.js:83
+msgid "Size"
+msgstr "Ukuran"
+
+#: src/prefs.js:93
+msgid "Technical"
+msgstr "Teknis"
+
+#: src/ui/dialogs/information.js:34
+msgid "Close"
+msgstr "Tutup"
+
+#: src/ui/dialogs/confirm.js:23
+msgid "Cancel"
+msgstr "Batalkan"
+
+#: src/ui/dialogs/confirm.js:31
+msgid "Ok"
+msgstr "Ok"
+
+#: src/ui/menu.js:81
+msgid "Empty"
+msgstr "Kosong"
+
+#~ msgid "Gateway copied to clipboard"
+#~ msgstr "salin gateway ke papan clip"
