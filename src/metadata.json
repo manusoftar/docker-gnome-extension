@@ -4,8 +4,12 @@
 	"description": "Quick access to Docker and Docker Compose.",
 	"version": 44,
 	"shell-version": [
-		"48",
-		"49"
+		"42",
+		"43",
+		"44",
+		"45",
+		"46",
+		"47"
 	],
 	"url": "https://github.com/manusoftar/docker-gnome-extension",
 	"gettext-domain": "docker@manusoftar.com.ar",
