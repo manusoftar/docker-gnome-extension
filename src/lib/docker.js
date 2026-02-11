@@ -15,6 +15,12 @@ export default class DockerAPI {
 		// DockerAPI._singleton = extension;
 
 		/**
+		* Docker API version to use
+		* @type {string}
+		*/
+		DockerAPI.DOCKER_API_VERSION = '1.45';
+
+		/**
 		* Docker commands
 		* @type {Array.<{label: string, command: string}>}
 		*/
@@ -358,10 +364,15 @@ export default class DockerAPI {
 				c = `docker ${command.command} ${item.id}`;
 		}
 
-		let subProcess = Gio.Subprocess.new(
-			['/bin/sh', '-c', c],
-			Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
-		);
+		// Create a subprocess launcher to set environment variables
+		let launcher = new Gio.SubprocessLauncher({
+			flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+		});
+
+		// Set DOCKER_API_VERSION environment variable
+		launcher.setenv('DOCKER_API_VERSION', DockerAPI.DOCKER_API_VERSION, true);
+
+		let subProcess = launcher.spawnv(['/bin/sh', '-c', c]);
 
 		subProcess.communicate_utf8_async(null, null, (proc, res) => {
 			try {
@@ -399,11 +410,14 @@ export default class DockerAPI {
 			flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
 		const [, argv_split] = GLib.shell_parse_argv(argv);
-		let subProcess = new Gio.Subprocess({
-			argv: argv_split,
-			flags: flags
-		});
-		subProcess.init(cancellable);
+
+		// Create a subprocess launcher to set environment variables
+		let launcher = new Gio.SubprocessLauncher({ flags: flags });
+
+		// Set DOCKER_API_VERSION environment variable
+		launcher.setenv('DOCKER_API_VERSION', DockerAPI.DOCKER_API_VERSION, true);
+
+		let subProcess = launcher.spawnv(argv_split);
 
 		if (cancellable instanceof Gio.Cancellable) {
 			cancelId = cancellable.connect(() => subProcess.force_exit());
