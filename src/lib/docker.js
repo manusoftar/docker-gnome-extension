@@ -407,10 +407,16 @@ export default class DockerAPI {
 				c = `${envVars}docker ${command.command} ${item.id}`;
 		}
 
-		let subProcess = Gio.Subprocess.new(
-			['/bin/sh', '-c', c],
-			Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
-		);
+		// Use SubprocessLauncher to ensure environment variables are properly set
+		let launcher = new Gio.SubprocessLauncher({
+			flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
+		});
+		
+		// Set Docker API version and host for subprocess
+		launcher.setenv('DOCKER_API_VERSION', this._api_version, true);
+		launcher.setenv('DOCKER_HOST', `unix://${this._socket_path}`, true);
+		
+		let subProcess = launcher.spawnv(['/bin/sh', '-c', c]);
 
 		subProcess.communicate_utf8_async(null, null, (proc, res) => {
 			try {
@@ -458,12 +464,12 @@ export default class DockerAPI {
 			flags: flags
 		});
 		
-		// Set DOCKER_API_VERSION environment variable for Docker commands
-		if (argv.includes('docker') && this._api_version) {
-			launcher.setenv('DOCKER_API_VERSION', this._api_version, true);
-		}
+		// Always set DOCKER_API_VERSION to ensure compatibility with Docker CE 29+
+		// Force API version 1.45 for all Docker-related commands
+		launcher.setenv('DOCKER_API_VERSION', this._api_version, true);
 		
-		// Ensure DOCKER_HOST points to the correct socket path on Unix systems
+		// Ensure DOCKER_HOST points to the correct socket path
+		// Format: unix:///var/run/docker.sock (three slashes)
 		launcher.setenv('DOCKER_HOST', `unix://${this._socket_path}`, true);
 		
 		let subProcess = launcher.spawnv(argv_split);
