@@ -21,21 +21,32 @@ We've created a corrected version of the master commit that properly references 
 
 ### To Apply This Fix
 
-The fixed commit is available in the `master-fixed` branch. To replace the master branch:
+**⚠️ IMPORTANT**: This fix requires force-push access to the master branch. A repository administrator must apply it.
+
+#### Automated Method (Recommended)
+
+The repository includes a script that automates the entire fix process:
 
 ```bash
-# Option 1: Update master to point to the fixed commit
-git branch -f master master-fixed
-git push origin master --force-with-lease
+# Run the fix script
+./fix-master-history.sh
 
-# Option 2: Create a new master from the fixed commit
-git checkout master-fixed
-git branch -D master
-git checkout -b master
+# The script will update the local master branch and display instructions
+# Then push the fixed master:
 git push origin master --force-with-lease
 ```
 
-**Note**: This requires force-push access to the repository. If you don't have permission, a repository administrator will need to apply this fix.
+#### Manual Method
+
+If you prefer to apply the fix manually:
+
+```bash
+# The fixed commit is available in both the 'master' and 'master-fixed' local branches
+# Simply push the corrected master branch:
+git push origin master --force-with-lease
+```
+
+**Note**: The `--force-with-lease` flag is safer than `--force` as it will abort if someone else has pushed to master in the meantime.
 
 ### Verification
 After applying the fix, you can verify that the histories are unified:
@@ -51,3 +62,29 @@ git merge-base master copilot/update-docker-api-version-again
 - **Unified history**: Both branches now share a common ancestor
 - **Merge-friendly**: The branches can now be merged normally without "unrelated histories" errors
 - **Existing commits preserved**: The copilot branch commits remain unchanged
+
+### After Applying the Fix
+
+Once the master branch has been updated on the remote:
+
+1. **Other developers** will need to update their local repositories:
+   ```bash
+   git fetch origin
+   git reset --hard origin/master  # If on master branch
+   ```
+
+2. **Merging branches** will now work normally:
+   ```bash
+   # Example: merging copilot branch into master
+   git checkout master
+   git merge origin/copilot/update-docker-api-version-again
+   ```
+
+3. **Future commits** will maintain the unified history automatically.
+
+### Status
+
+- ✅ Fix has been prepared and tested locally
+- ✅ Documentation and automation script created
+- ⏳ **PENDING**: Push to remote master branch (requires admin access)
+- ⏳ After push: Team members need to update their local clones
