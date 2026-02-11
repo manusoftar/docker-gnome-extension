@@ -358,7 +358,6 @@ export default class DockerAPI {
 	static async run_command(command, item) {
 		const Settings = DockerManager.settings;
 		let c = "";
-		const envVars = `DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=${this.get_docker_host_uri()} `;
 		
 		switch (command) {
 			// TODO: Make text to be translated
@@ -367,15 +366,18 @@ export default class DockerAPI {
 				item = { name: "" };
 				break;
 			case this.docker_commands.c_exec:
-				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id} bash; read -p "Press enter to exit..."'`;
+				// Terminal commands need environment variables in the command string
+				// since they're spawned via GLib.spawn_command_line_async
+				c = `${Settings.get_string('terminal')} 'DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=${this.get_docker_host_uri()} docker ${command.command} ${item.id} bash; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 			case this.docker_commands.c_attach:
-				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
+				c = `${Settings.get_string('terminal')} 'DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=${this.get_docker_host_uri()} docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 			case this.docker_commands.c_stop:
-				c = `${envVars}docker ${command.command} ${Settings.get_string('stop-command-options')} ${item.id}`;
+				// Non-terminal commands will use SubprocessLauncher which sets env vars
+				c = `docker ${command.command} ${Settings.get_string('stop-command-options')} ${item.id}`;
 				break;
 
 			case this.docker_commands.c_start_i:
@@ -383,7 +385,7 @@ export default class DockerAPI {
 			case this.docker_commands.c_logs:
 			case this.docker_commands.i_inspect:
 			case this.docker_commands.i_run_i:
-				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
+				c = `${Settings.get_string('terminal')} 'DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=${this.get_docker_host_uri()} docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 
@@ -395,11 +397,11 @@ export default class DockerAPI {
 				}
 
 				if (await this.docker_version() >= 26) {
-					c = `${envVars}docker compose ${command.command}`;
+					c = `docker compose ${command.command}`;
 					break;
 				}
 
-				c = `${envVars}docker-compose ${command.command}`;
+				c = `docker-compose ${command.command}`;
 				break;
 			case this.docker_commands.compose_restart:
 				if (GLib.chdir(item.compose_dir) !== 0) {
@@ -407,15 +409,15 @@ export default class DockerAPI {
 				}
 
 				if (await this.docker_version() >= 26) {
-					c = `${envVars}docker compose down; ${envVars}docker compose up -d`;
+					c = `docker compose down; docker compose up -d`;
 					break;
 				}
 
-				c = `${envVars}docker-compose down; ${envVars}docker-compose up -d`;
+				c = `docker-compose down; docker-compose up -d`;
 				break;
 
 			default:
-				c = `${envVars}docker ${command.command} ${item.id}`;
+				c = `docker ${command.command} ${item.id}`;
 		}
 
 		// Use SubprocessLauncher to ensure environment variables are properly set
