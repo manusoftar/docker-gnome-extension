@@ -1,0 +1,13 @@
+{
+	"uuid": "docker@stickman_0x00.com",
+	"name": "Docker",
+	"description": "Quick access to Docker and Docker Compose.",
+	"version": 43,
+	"shell-version": [
+		"48",
+		"49"
+	],
+	"url": "https://gitlab.com/stickman_0x00/gnome_shell_extension_docker",
+	"gettext-domain": "docker@stickman_0x00.com",
+	"settings-schema": "org.gnome.shell.extensions.docker"
+}
