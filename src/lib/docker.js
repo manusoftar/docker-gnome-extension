@@ -14,8 +14,9 @@ export default class DockerAPI {
 		// 	throw new Error('DockerManager has been already initialized');
 		// DockerAPI._singleton = extension;
 
-		// Set Docker API version to 1.45 for compatibility with modern Docker daemons
+		// Set Docker API version to 1.45 as minimum supported version
 		// This will be updated dynamically when the extension initializes
+		// to match the Docker daemon's API version
 		DockerAPI._api_version = '1.45';
 		DockerAPI._socket_path = '/var/run/docker.sock';
 
@@ -185,7 +186,9 @@ export default class DockerAPI {
 
 	/**
 	 * Get Docker daemon API version
-	 * @return {Promise<string>} - API version like "1.45"
+	 * Detects and returns the API version supported by the Docker daemon.
+	 * Falls back to minimum supported version 1.45 if detection fails.
+	 * @return {Promise<string>} - API version like "1.45" or higher
 	 */
 	static async get_docker_api_version() {
 		let apiVersion = this._api_version;
@@ -197,7 +200,7 @@ export default class DockerAPI {
 				this._api_version = apiVersion;
 			}
 		} catch (err) {
-			// If we can't get the API version, fall back to 1.45
+			// If we can't get the API version, fall back to 1.45 (minimum supported)
 			console.warn('Failed to detect Docker API version, using default:', err);
 		}
 		return apiVersion;
