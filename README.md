@@ -2,6 +2,13 @@
 
 The objective is to create and manage containers from a tray icon.
 
+## Features
+
+-   Manage Docker containers and images from the GNOME Shell panel
+-   Support for Docker Compose projects
+-   Compatible with Docker API version 1.45 with automatic version negotiation
+-   Works with Docker on Ubuntu using `/var/run/docker.sock`
+
 # Install
 
 ## Dependencies

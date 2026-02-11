@@ -1,3 +1,16 @@
+## [Unreleased]
+
+### Add
+
+- Docker API version 1.45 support with dynamic API version negotiation.
+- Environment variable DOCKER_API_VERSION automatically set for all Docker commands.
+- Docker daemon API version detection on extension initialization.
+- Explicit DOCKER_HOST environment variable pointing to /var/run/docker.sock for Ubuntu compatibility.
+
+### Fix
+
+- Improved error handling for Docker API version mismatches with helpful error messages.
+
 ## [43.0.0] - 02/Nov/2025
 
 ### Add
