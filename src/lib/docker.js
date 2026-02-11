@@ -14,6 +14,11 @@ export default class DockerAPI {
 		// 	throw new Error('DockerManager has been already initialized');
 		// DockerAPI._singleton = extension;
 
+		// Set Docker API version to 1.45 for compatibility with modern Docker daemons
+		// This will be updated dynamically when the extension initializes
+		DockerAPI._api_version = '1.45';
+		DockerAPI._socket_path = '/var/run/docker.sock';
+
 		/**
 		* Docker commands
 		* @type {Array.<{label: string, command: string}>}
@@ -114,6 +119,10 @@ export default class DockerAPI {
 				if (output.includes("snap")) {
 					this._set_snaps();
 				}
+				// Try to detect the Docker daemon API version
+				DockerAPI.get_docker_api_version().catch((_err) => {
+					console.warn('Failed to detect Docker API version on initialization');
+				});
 			})
 			.catch((_err) => { });
 	}
@@ -172,6 +181,41 @@ export default class DockerAPI {
 			.catch((_err) => { });
 
 		return version;
+	}
+
+	/**
+	 * Get Docker daemon API version
+	 * @return {Promise<string>} - API version like "1.45"
+	 */
+	static async get_docker_api_version() {
+		let apiVersion = this._api_version;
+		try {
+			const output = await this.exec_communicate(`docker version --format '{{.Server.APIVersion}}'`);
+			if (output && output.trim()) {
+				apiVersion = output.trim();
+				// Store the detected version for future use
+				this._api_version = apiVersion;
+			}
+		} catch (err) {
+			// If we can't get the API version, fall back to 1.45
+			console.warn('Failed to detect Docker API version, using default:', err);
+		}
+		return apiVersion;
+	}
+
+	/**
+	 * Verify Docker socket is accessible
+	 * @return {Promise<Boolean>}
+	 */
+	static async verify_docker_socket() {
+		try {
+			// Check if the socket exists and is accessible
+			const file = Gio.File.new_for_path(this._socket_path);
+			return file.query_exists(null);
+		} catch (err) {
+			console.error('Docker socket verification failed:', err);
+			return false;
+		}
 	}
 
 	/**
@@ -300,6 +344,8 @@ export default class DockerAPI {
 	static async run_command(command, item) {
 		const Settings = DockerManager.settings;
 		let c = "";
+		const envVars = `DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=unix://${this._socket_path} `;
+		
 		switch (command) {
 			// TODO: Make text to be translated
 			case this.docker_commands.s_start:
@@ -307,15 +353,15 @@ export default class DockerAPI {
 				item = { name: "" };
 				break;
 			case this.docker_commands.c_exec:
-				c = `${Settings.get_string('terminal')} 'docker ${command.command} ${item.id} bash; read -p "Press enter to exit..."'`;
+				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id} bash; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 			case this.docker_commands.c_attach:
-				c = `${Settings.get_string('terminal')} 'docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
+				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 			case this.docker_commands.c_stop:
-				c = `docker ${command.command} ${Settings.get_string('stop-command-options')} ${item.id}`;
+				c = `${envVars}docker ${command.command} ${Settings.get_string('stop-command-options')} ${item.id}`;
 				break;
 
 			case this.docker_commands.c_start_i:
@@ -323,7 +369,7 @@ export default class DockerAPI {
 			case this.docker_commands.c_logs:
 			case this.docker_commands.i_inspect:
 			case this.docker_commands.i_run_i:
-				c = `${Settings.get_string('terminal')} 'docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
+				c = `${Settings.get_string('terminal')} '${envVars}docker ${command.command} ${item.id}; read -p "Press enter to exit..."'`;
 				GLib.spawn_command_line_async(c);
 				return;
 
@@ -335,11 +381,11 @@ export default class DockerAPI {
 				}
 
 				if (await this.docker_version() >= 26) {
-					c = `docker compose ${command.command}`;
+					c = `${envVars}docker compose ${command.command}`;
 					break;
 				}
 
-				c = `docker-compose ${command.command}`;
+				c = `${envVars}docker-compose ${command.command}`;
 				break;
 			case this.docker_commands.compose_restart:
 				if (GLib.chdir(item.compose_dir) !== 0) {
@@ -347,15 +393,15 @@ export default class DockerAPI {
 				}
 
 				if (await this.docker_version() >= 26) {
-					c = `docker compose down; docker compose up -d`;
+					c = `${envVars}docker compose down; ${envVars}docker compose up -d`;
 					break;
 				}
 
-				c = `docker-compose down; docker-compose up -d`;
+				c = `${envVars}docker-compose down; ${envVars}docker-compose up -d`;
 				break;
 
 			default:
-				c = `docker ${command.command} ${item.id}`;
+				c = `${envVars}docker ${command.command} ${item.id}`;
 		}
 
 		let subProcess = Gio.Subprocess.new(
@@ -368,6 +414,10 @@ export default class DockerAPI {
 				let [, , stderr] = proc.communicate_utf8_finish(res);
 
 				if (!proc.get_successful()) {
+					// Check if it's an API version mismatch error
+					if (stderr && stderr.includes('API version')) {
+						stderr = `Docker API version mismatch: ${stderr}\nConsider upgrading Docker or the extension.`;
+					}
 					throw new Error(stderr);
 				}
 
@@ -399,11 +449,21 @@ export default class DockerAPI {
 			flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
 		const [, argv_split] = GLib.shell_parse_argv(argv);
-		let subProcess = new Gio.Subprocess({
-			argv: argv_split,
+		
+		// Create subprocess launcher with environment variables
+		let launcher = new Gio.SubprocessLauncher({
 			flags: flags
 		});
-		subProcess.init(cancellable);
+		
+		// Set DOCKER_API_VERSION environment variable for Docker commands
+		if (argv.includes('docker') && this._api_version) {
+			launcher.setenv('DOCKER_API_VERSION', this._api_version, true);
+		}
+		
+		// Ensure DOCKER_HOST points to the correct socket path on Unix systems
+		launcher.setenv('DOCKER_HOST', `unix://${this._socket_path}`, true);
+		
+		let subProcess = launcher.spawnv(argv_split);
 
 		if (cancellable instanceof Gio.Cancellable) {
 			cancelId = cancellable.connect(() => subProcess.force_exit());
@@ -416,6 +476,10 @@ export default class DockerAPI {
 					let status = proc.get_exit_status();
 
 					if (status !== 0) {
+						// Check if it's an API version mismatch error
+						if (stderr && stderr.includes('API version')) {
+							stderr = `Docker API version mismatch: ${stderr}\nConsider upgrading Docker or the extension.`;
+						}
 						throw new Gio.IOErrorEnum({
 							code: Gio.io_error_from_errno(status),
 							message: stderr ? stderr.trim() : GLib.strerror(status)
