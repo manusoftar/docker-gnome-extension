@@ -22,7 +22,7 @@ export default class DockerManager {
 	 * @returns {Console}
 	 */
 	static get console() {
-		return DockerManager.getDefault().getLogger();
+		return console;
 	}
 
 	destroy() {
