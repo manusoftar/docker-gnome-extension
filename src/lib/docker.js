@@ -142,6 +142,17 @@ export default class DockerAPI {
 	}
 
 	/**
+	 * Get properly formatted Docker host URI
+	 * Ensures the format is always unix:/// with three slashes
+	 * @return {string} Docker host URI (e.g., unix:///var/run/docker.sock)
+	 */
+	static get_docker_host_uri() {
+		// Ensure socket path starts with / for proper URI format
+		const socketPath = this._socket_path.startsWith('/') ? this._socket_path : `/${this._socket_path}`;
+		return `unix://${socketPath}`;
+	}
+
+	/**
 	 * Check if docker is installed
 	 * @return {Boolean}
 	 */
@@ -347,7 +358,7 @@ export default class DockerAPI {
 	static async run_command(command, item) {
 		const Settings = DockerManager.settings;
 		let c = "";
-		const envVars = `DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=unix://${this._socket_path} `;
+		const envVars = `DOCKER_API_VERSION=${this._api_version} DOCKER_HOST=${this.get_docker_host_uri()} `;
 		
 		switch (command) {
 			// TODO: Make text to be translated
@@ -414,7 +425,7 @@ export default class DockerAPI {
 		
 		// Set Docker API version and host for subprocess
 		launcher.setenv('DOCKER_API_VERSION', this._api_version, true);
-		launcher.setenv('DOCKER_HOST', `unix://${this._socket_path}`, true);
+		launcher.setenv('DOCKER_HOST', this.get_docker_host_uri(), true);
 		
 		let subProcess = launcher.spawnv(['/bin/sh', '-c', c]);
 
@@ -470,7 +481,7 @@ export default class DockerAPI {
 		
 		// Ensure DOCKER_HOST points to the correct socket path
 		// Format: unix:///var/run/docker.sock (three slashes)
-		launcher.setenv('DOCKER_HOST', `unix://${this._socket_path}`, true);
+		launcher.setenv('DOCKER_HOST', this.get_docker_host_uri(), true);
 		
 		let subProcess = launcher.spawnv(argv_split);
 
